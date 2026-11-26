@@ -3,7 +3,7 @@
 <title>Yoksaires — проекты</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#050b12;color:#edf3ff;font:16px system-ui,sans-serif}main{max-width:1050px;margin:auto;padding:45px 22px}header{padding:42px 0;border-bottom:1px solid #29364c}h1{font-size:clamp(34px,7vw,64px);margin:10px 0}h2{margin-top:35px}.muted{color:#a9b9d2;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.card{background:#0b1924;border:1px solid #2c3d56;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px}.card h3{margin:0;color:#55f6d2}.card p{flex:1;line-height:1.5}.actions{display:flex;flex-wrap:wrap;gap:8px}a,button{color:#dcecff;background:#253e60;border:1px solid #47678e;border-radius:9px;padding:9px 12px;text-decoration:none;font:inherit;cursor:pointer}a:hover,button:hover{background:#345b89}dialog{background:#0b1924;color:#edf3ff;border:1px solid #47678e;border-radius:15px;width:min(800px,94vw);max-height:85vh;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}footer{margin:35px 0;color:#a9b9d2}
- 
+
 body{background-image:linear-gradient(#17304344 1px,transparent 1px),linear-gradient(90deg,#17304344 1px,transparent 1px);background-size:32px 32px}
 header{border-left:3px solid #55f6d2;padding-left:22px}h1,h2,h3,small{font-family:ui-monospace,Consolas,monospace}h1{text-shadow:0 0 24px #55f6d244}.card{border-top:2px solid #55f6d2;box-shadow:0 8px 28px #0005}a,button{border-color:#287b77;background:#103039}a:hover,button:hover{background:#18534e}small{letter-spacing:1px}
 </style></head><body><main>
@@ -14,44 +14,25 @@ header{border-left:3px solid #55f6d2;padding-left:22px}h1,h2,h3,small{font-famil
 <footer>Yoksaires · GitHub Pages</footer></main>
 <dialog id="readme"><button id="close">Закрыть</button><h2>README</h2><pre id="readtext"></pre></dialog>
 <script>
-const $=id=>document.getElementById(id);
-$('close').onclick=()=>$('readme').close();
-async function read(repo){
-$('readtext').textContent='Загрузка…';$('readme').showModal();
-try{let r=await fetch('https://api.github.com/repos/yoksaires/'+encodeURIComponent(repo)+'/readme',{headers:{Accept:'application/vnd.github.raw+json'}});
-if(!r.ok)throw Error('README недоступен');$('readtext').textContent=await r.text()
-}catch(e){$('readtext').textContent=e.message}
+const projects=[
+['SBPalette','sbpalette','main.html'],
+['Isaac Progress — достижения','tboi-achievements-tracker-',''],
+['Collision Space','collision-space','collision_space.html'],
+['Трудовой договор','td','tryd_dogovor.html']
+];
+const box=document.getElementById('projects');
+document.getElementById('status').textContent='';
+for(const [name,repo,path] of projects){
+ const card=document.createElement('article');card.className='card';
+ const h=document.createElement('h3');h.textContent=name;card.append(h);
+ const actions=document.createElement('div');actions.className='actions';
+ for(const [label,url] of [
+ ['Открыть проект','https://yoksaires.me/'+repo+'/'+path],
+ ['Репозиторий','https://github.com/yoksaires/'+repo],
+ ['README','https://github.com/yoksaires/'+repo+'#readme']
+ ]){
+  const link=document.createElement('a');link.textContent=label;link.href=url;actions.append(link);
+ }
+ card.append(actions);box.append(card);
 }
-async function load(){
-try{let r=await fetch('https://api.github.com/users/yoksaires/repos?per_page=100&sort=updated');if(!r.ok)throw Error('GitHub API недоступен');let repos=await r.json();$('status').textContent='';
-for(let x of repos){if(x.fork)continue;let c=document.createElement('article');c.className='card';
-let h=document.createElement('h3');h.textContent=x.name;c.append(h);
-let d=document.createElement('p');d.textContent=x.description||'Описание пока не добавлено.';c.append(d);
-let meta=document.createElement('small');meta.textContent=x.language||'Проект';c.append(meta);
-let a=document.createElement('div');a.className='actions';
-let link=document.createElement('a');link.href=x.html_url;link.textContent='Репозиторий';a.append(link);
-let b=document.createElement('button');b.textContent='README';b.onclick=()=>read(x.name);a.append(b);
-let url=''; const knownPages={'sbpalette':'main.html','tboi-achievements-tracker-':'','collision-space':'collision_space.html','td':'tryd_dogovor.html'};
-if(x.has_pages){
-try{
-let pr=await fetch(x.url+'/pages');
-if(pr.ok){let pg=await pr.json();url=pg.html_url||''}
-let tr=await fetch(x.url+'/git/trees/'+encodeURIComponent(x.default_branch)+'?recursive=1');
-if(tr.ok){
-let tree=await tr.json();
-let files=tree.tree.filter(f=>f.type==='blob'&&/(^|\/)index\.html$/i.test(f.path));
-files.sort((a,b)=>a.path.split('/').length-b.path.split('/').length);
-if(files.length){
-let base=url||'https://yoksaires.me/'+encodeURIComponent(x.name)+'/';
-let path=files[0].path;
-url=base.replace(/\/?$/,'/')+path.split('/').map(encodeURIComponent).join('/');
-}
-}
-}catch(e){}
-}
-if(!url&&x.homepage)url=x.homepage; if(Object.prototype.hasOwnProperty.call(knownPages,x.name)) url='https://yoksaires.me/'+x.name+'/'+knownPages[x.name];
-if(url){let page=document.createElement('a');page.href=url;page.textContent='Открыть проект';a.append(page)}
-c.append(a);$('projects').append(c)}
-}catch(e){$('status').textContent='Не удалось загрузить проекты. Откройте профиль GitHub.'}
-}load();
 </script></body></html>
