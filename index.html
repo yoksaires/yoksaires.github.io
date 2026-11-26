@@ -22,6 +22,18 @@ const projects=[
 ];
 const box=document.getElementById('projects');
 document.getElementById('status').textContent='';
+const seen=new Set(projects.map(x=>x[1].toLowerCase()));
+async function addOther(){
+try{
+const r=await fetch('https://api.github.com/users/yoksaires/repos?per_page=100');
+if(!r.ok)return;
+const repos=await r.json();
+for(const x of repos){
+if(x.fork||seen.has(x.name.toLowerCase()))continue;
+projects.push([x.name,x.name,null]);
+}
+}catch(e){}
+}
 for(const [name,repo,path] of projects){
  const card=document.createElement('article');card.className='card';
  const h=document.createElement('h3');h.textContent=name;card.append(h);
@@ -35,4 +47,17 @@ for(const [name,repo,path] of projects){
  }
  card.append(actions);box.append(card);
 }
+fetch('https://api.github.com/users/yoksaires/repos?per_page=100').then(r=>r.ok?r.json():[]).then(repos=>{
+for(const x of repos){
+if(x.fork||seen.has(x.name.toLowerCase()))continue;
+const c=document.createElement('article');c.className='card';
+const h=document.createElement('h3');h.textContent=x.name;c.append(h);
+const d=document.createElement('p');d.textContent=x.description||'Проект на GitHub';c.append(d);
+const a=document.createElement('div');a.className='actions';
+for(const [label,url] of [['Репозиторий',x.html_url],['README',x.html_url+'#readme']]){
+const l=document.createElement('a');l.textContent=label;l.href=url;a.append(l);
+}
+c.append(a);box.append(c);
+}
+}).catch(()=>{});
 </script></body></html>
